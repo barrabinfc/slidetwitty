@@ -1,0 +1,27 @@
+:root {
+    --bgcolor: #ffffff;
+    --txtcolor: #0f0f0f;
+    
+    --minw: 320px;
+    --maxw: 480px;
+}
+
+html { 
+    scroll-behavior: smooth;
+}
+
+body {
+    width: 100vw;
+    overflow-x: hidden;
+    background-color: var(--bgcolor);
+    color: var(--txtcolor);
+}
+
+@import '_utils.scss';
+
+.container {
+    width: 80%;
+
+    &.\:auto { margin: 0px auto; }
+}
+

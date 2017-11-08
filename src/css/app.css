@@ -1,0 +1,32 @@
+:root {
+  --bgcolor: #ffffff;
+  --txtcolor: #0f0f0f;
+  --minw: 320px;
+  --maxw: 480px;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  width: 100vw;
+  overflow-x: hidden;
+  background-color: var(--bgcolor);
+  color: var(--txtcolor);
+}
+
+.transparent {
+  opacity: 0;
+}
+
+.container {
+  width: 80%;
+}
+
+.container.\:auto {
+  margin: 0px auto;
+}
+ 
+
+ /*# sourceMappingURL= app.css.map */

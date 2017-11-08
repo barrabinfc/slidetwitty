@@ -1,0 +1,41 @@
+{
+  "name": "slidetwitty",
+  "version": "1.0.0",
+  "description": "Displays a twitter feed as slideshow.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "bundle": "rollup --format=cjs --output=dist/bundle.js -- src/app.js",
+    "build": "make build"
+  },
+  "keywords": [
+    "twitter",
+    "thewrong",
+    "digitalart"
+  ],
+  "author": "rainbowcoral",
+  "license": "ISC",
+  "dependencies": {
+    "babel": "^6.23.0",
+    "babel-cli": "^6.26.0",
+    "dat.gui": "^0.6.1",
+    "kambo": "0.0.2",
+    "kambo-css": "0.0.2",
+    "kambo-dom": "0.0.2",
+    "kambo-functional": "0.0.2",
+    "kambo-polyfills": "0.0.4",
+    "most": "^1.7.2",
+    "rollup": "^0.51.1",
+    "twitter-node-client": "0.0.6",
+    "user-stream": "0.0.8",
+    "vue": "^2.5.3",
+    "zenscroll": "^4.0.0"
+  },
+  "devDependencies": {
+    "babel-plugin-external-helpers": "^6.22.0",
+    "babel-preset-latest": "^6.24.1",
+    "rollup-plugin-babel": "^3.0.2",
+    "rollup-plugin-commonjs": "^8.2.6",
+    "rollup-plugin-node-resolve": "^3.0.0"
+  }
+}
