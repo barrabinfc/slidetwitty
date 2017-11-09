@@ -2,39 +2,45 @@ let zenscroll = require('zenscroll')
 window.zenscroll = zenscroll
 
 export default class Scroller {
-    constructor(el, settings={page_size: undefined, 
-                              interval: 12.5, 
-                              direction: 'vertical',
-                              offset: 0,
-                              duration: 785}) {
+    constructor(el, settings={}) {
         this.el = el
-        
-        this.page_size       = settings.page_size || el.clientHeight
-        this.maxHeight       = el.offsetHeight
-        
-        this.dur = settings.duration || 785
-        this.interval = settings.interval || 3
-        this.dir = (settings.direction == 'vertical' && 'Top' || 'Left' )
 
+        this.settings = settings
         this.scroll(0);
     }
 
+
+    set settings( setts ) {
+        this._settings = {
+            page_size:  setts.page_size || this.el.clientHeight,
+            maxHeight:  this.el.offsetHeight,
+            dur:        setts.duration || 785,
+            interval:   setts.interval || 3,
+            dir:        (setts.direction == 'vertical' && 'Top' || 'Left' ),
+            
+            set: (prop_name, v) => {
+                this._settings[prop_name] = v
+            } 
+        }
+    }
+    
+
     cycle(){
-        let next_window = zenscroll.getY() + this.page_size;
+        let next_window = zenscroll.getY() + this.settings.page_size;
         this.scroll( next_window )
     }
 
     scroll(x) {
-        console.log("Scroller:scroll", x)
-        zenscroll.toY(x, this.dur, this.update.bind(this) )
+        console.log("Scroller:scroll", this.settings)
+        zenscroll.toY(x, this.settings.dur, this.update.bind(this) )
     }
 
     update(){
-        this.pct = zenscroll.getY() / this.maxHeight 
+        this.pct = zenscroll.getY() / this.settings.maxHeight 
     }
 
     start(){
-        this._int_handler = setInterval( this.cycle.bind(this), this.interval * 1000 )
+        this._int_handler = setInterval( this.cycle.bind(this), this.settings.interval * 1000 )
     }
     stop(){
         clearInterval( this._int_handler)
@@ -44,4 +50,6 @@ export default class Scroller {
         if(this._int_handler != undefined){ this.stop(); }
         else { this.start(); }
     }
+
+
 }

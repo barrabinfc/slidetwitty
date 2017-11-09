@@ -114,46 +114,36 @@ window.zenscroll = zenscroll$1;
 
 var Scroller = function () {
     function Scroller(el) {
-        var settings = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : { page_size: undefined,
-            interval: 12.5,
-            direction: 'vertical',
-            offset: 0,
-            duration: 785 };
+        var settings = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
         classCallCheck(this, Scroller);
 
         this.el = el;
 
-        this.page_size = settings.page_size || el.clientHeight;
-        this.maxHeight = el.offsetHeight;
-
-        this.dur = settings.duration || 785;
-        this.interval = settings.interval || 3;
-        this.dir = settings.direction == 'vertical' && 'Top' || 'Left';
-
+        this.settings = settings;
         this.scroll(0);
     }
 
     createClass(Scroller, [{
         key: 'cycle',
         value: function cycle() {
-            var next_window = zenscroll$1.getY() + this.page_size;
+            var next_window = zenscroll$1.getY() + this.settings.page_size;
             this.scroll(next_window);
         }
     }, {
         key: 'scroll',
         value: function scroll(x) {
-            console.log("Scroller:scroll", x);
-            zenscroll$1.toY(x, this.dur, this.update.bind(this));
+            console.log("Scroller:scroll", this.settings);
+            zenscroll$1.toY(x, this.settings.dur, this.update.bind(this));
         }
     }, {
         key: 'update',
         value: function update() {
-            this.pct = zenscroll$1.getY() / this.maxHeight;
+            this.pct = zenscroll$1.getY() / this.settings.maxHeight;
         }
     }, {
         key: 'start',
         value: function start() {
-            this._int_handler = setInterval(this.cycle.bind(this), this.interval * 1000);
+            this._int_handler = setInterval(this.cycle.bind(this), this.settings.interval * 1000);
         }
     }, {
         key: 'stop',
@@ -169,6 +159,23 @@ var Scroller = function () {
             } else {
                 this.start();
             }
+        }
+    }, {
+        key: 'settings',
+        set: function set$$1(setts) {
+            var _this = this;
+
+            this._settings = {
+                page_size: setts.page_size || this.el.clientHeight,
+                maxHeight: this.el.offsetHeight,
+                dur: setts.duration || 785,
+                interval: setts.interval || 3,
+                dir: setts.direction == 'vertical' && 'Top' || 'Left',
+
+                set: function set$$1(prop_name, v) {
+                    _this._settings[prop_name] = v;
+                }
+            };
         }
     }]);
     return Scroller;
@@ -190,24 +197,62 @@ applyPolyfills(DEFAULT_POLYFILLS, 'node_modules/kambo-polyfills/polyfills/').the
  
 import TwitLine from './TwitLine'
 */
-function setup() {
-    var docScroller = new Scroller(document.body, {
-        page_size: gui.params.window_size,
-        interval: gui.params.interval
-    });
+/*
+function InstallSpy( obj , spy_contact ) {
+    return new Proxy( obj, {
+        get: (target, name) => {
+            return target[name]
+        },
+        set: (target, name, value) => {
+            console.log("Woahh")
+            target[name] = value
+            spy_contact[name] = value
+            return value
+        }
+    })
+}
+*/
+
+// Alias and declarations
+window.setup = function () {
+    window.docScroller = new Scroller(document.body);
+    var docScroller = window.docScroller;
 
     docScroller.start();
     setTimeout(function () {
         zenscroll.toY(70);
     }, 1000);
-}
+
+    /*
+     * Connect docScroller to gui 
+    toPairs( window.settings ).map( ([prop, value]) => {
+        grampearProperty( window.settings[prop], docScroller )
+    })
+    */
+
+    /*
+    window.gui.__controllers.map( (a) => {
+        let c_name = a.property
+        a.onFinishChange = console.log
+        a.__onChange = (x) => {
+            console.log('called onChange')
+            docScroller.set(c_name,x)
+        }
+    })
+    */
+};
+
+window.destroy = function () {
+    docScroller.stop();
+    docScroller = undefined;
+};
 
 document.addEventListener('keypress', function (k) {
     if (k.key == "Enter") {
-        gui.domElement.classList.toggle('transparent');
+        window.gui.domElement.classList.toggle('transparent');
     }
 });
-document.addEventListener('DOMContentLoaded', setup);
+window.addEventListener('load', setup);
 
 })));
 

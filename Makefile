@@ -2,11 +2,11 @@ ROLLUP=./node_modules/.bin/rollup
 
 js:
 	$(ROLLUP) -c
-
+	$(ROLLUP) -c rollup.config.gui.js
 
 bundle_js:
 	browserify dist/app.js -s app > dist/bundle.js
-	browserify src/gui.js -s mgui > dist/gui.js 
+	browserify dist/gui.js -s mgui > dist/mgui.js 
 
 watch:
 	watchmedo shell-command \
