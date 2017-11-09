@@ -10,6 +10,9 @@ export default class Scroller {
     }
 
 
+    get settings( ) {
+        return this._settings
+    }
     set settings( setts ) {
         this._settings = {
             page_size:  setts.page_size || this.el.clientHeight,
@@ -31,7 +34,6 @@ export default class Scroller {
     }
 
     scroll(x) {
-        console.log("Scroller:scroll", this.settings)
         zenscroll.toY(x, this.settings.dur, this.update.bind(this) )
     }
 
@@ -44,7 +46,7 @@ export default class Scroller {
     }
     stop(){
         clearInterval( this._int_handler)
-        this._int_handler = undefined
+        this._int_handler = undefined        
     }
     toggle(){
         if(this._int_handler != undefined){ this.stop(); }

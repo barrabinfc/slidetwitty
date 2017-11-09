@@ -19,51 +19,24 @@ import TwitLine from './TwitLine'
 import Scroller from './Scroller'
 import defaultSettings from './Settings'
 
-/*
-function InstallSpy( obj , spy_contact ) {
-    return new Proxy( obj, {
-        get: (target, name) => {
-            return target[name]
-        },
-        set: (target, name, value) => {
-            console.log("Woahh")
-            target[name] = value
-            spy_contact[name] = value
-            return value
-        }
-    })
-}
-*/
 
 // Alias and declarations
 window.setup = function() {
-    window.docScroller = new Scroller(document.body );
-    let docScroller = window.docScroller;
+    console.group('App setup...')
 
+    window.docScroller = new Scroller(document.body );
+    let docScroller = window.docScroller || undefined;
+
+    console.log( docScroller != undefined 
+                 ? 'Creating scroller...OK' 
+                 : 'Creating scroller...FAILED')
 
     docScroller.start();
     setTimeout(function () {
-        zenscroll.toY(70);
+        zenscroll.toY(window.settings.offset);
     }, 1000);
 
-    /*
-     * Connect docScroller to gui 
-    toPairs( window.settings ).map( ([prop, value]) => {
-        grampearProperty( window.settings[prop], docScroller )
-    })
-    */
-    
-
-    /*
-    window.gui.__controllers.map( (a) => {
-        let c_name = a.property
-        a.onFinishChange = console.log
-        a.__onChange = (x) => {
-            console.log('called onChange')
-            docScroller.set(c_name,x)
-        }
-    })
-    */
+    console.groupEnd('App setup...')
 }
 
 window.destroy = function(){
@@ -76,4 +49,4 @@ document.addEventListener('keypress', function (k) {
         window.gui.domElement.classList.toggle('transparent');
     }
 });
-window.addEventListener('load', setup);
+document.addEventListener('DOMContentLoaded', setup);

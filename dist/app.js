@@ -131,7 +131,6 @@ var Scroller = function () {
     }, {
         key: 'scroll',
         value: function scroll(x) {
-            console.log("Scroller:scroll", this.settings);
             zenscroll$1.toY(x, this.settings.dur, this.update.bind(this));
         }
     }, {
@@ -161,6 +160,9 @@ var Scroller = function () {
         }
     }, {
         key: 'settings',
+        get: function get$$1() {
+            return this._settings;
+        },
         set: function set$$1(setts) {
             var _this = this;
 
@@ -196,49 +198,21 @@ applyPolyfills(DEFAULT_POLYFILLS, 'node_modules/kambo-polyfills/polyfills/').the
  
 import TwitLine from './TwitLine'
 */
-/*
-function InstallSpy( obj , spy_contact ) {
-    return new Proxy( obj, {
-        get: (target, name) => {
-            return target[name]
-        },
-        set: (target, name, value) => {
-            console.log("Woahh")
-            target[name] = value
-            spy_contact[name] = value
-            return value
-        }
-    })
-}
-*/
-
 // Alias and declarations
 window.setup = function () {
+    console.group('App setup...');
+
     window.docScroller = new Scroller(document.body);
-    var docScroller = window.docScroller;
+    var docScroller = window.docScroller || undefined;
+
+    console.log(docScroller != undefined ? 'Creating scroller...OK' : 'Creating scroller...FAILED');
 
     docScroller.start();
     setTimeout(function () {
-        zenscroll.toY(70);
+        zenscroll.toY(window.settings.offset);
     }, 1000);
 
-    /*
-     * Connect docScroller to gui 
-    toPairs( window.settings ).map( ([prop, value]) => {
-        grampearProperty( window.settings[prop], docScroller )
-    })
-    */
-
-    /*
-    window.gui.__controllers.map( (a) => {
-        let c_name = a.property
-        a.onFinishChange = console.log
-        a.__onChange = (x) => {
-            console.log('called onChange')
-            docScroller.set(c_name,x)
-        }
-    })
-    */
+    console.groupEnd('App setup...');
 };
 
 window.destroy = function () {
@@ -251,6 +225,6 @@ document.addEventListener('keypress', function (k) {
         window.gui.domElement.classList.toggle('transparent');
     }
 });
-window.addEventListener('load', setup);
+document.addEventListener('DOMContentLoaded', setup);
 
 })));
