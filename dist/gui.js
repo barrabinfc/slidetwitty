@@ -1,29 +1,64 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-	typeof define === 'function' && define.amd ? define(factory) :
-	(global.radiolarian = factory());
-}(this, (function () { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+	typeof define === 'function' && define.amd ? define(['exports'], factory) :
+	(factory((global.radiolarian = {})));
+}(this, (function (exports) { 'use strict';
 
 var AppSettings = function AppSettings() {
+    this.enabled = true;
     this.interval = 5;
     this.user_id = 'zero_likes';
     this.page_size = 650.0, this.offset = 0, this.restart = function () {
         destroy();
-        setup();
+        setTimeout(setup, 200);
     };
 };
 
 var params = new AppSettings();
 
+var slicedToArray = function () {
+  function sliceIterator(arr, i) {
+    var _arr = [];
+    var _n = true;
+    var _d = false;
+    var _e = undefined;
 
-var Settings = Object.freeze({
-	default: params
-});
+    try {
+      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+        _arr.push(_s.value);
 
-var defaultSettings = ( Settings && params ) || Settings;
+        if (i && _arr.length === i) break;
+      }
+    } catch (err) {
+      _d = true;
+      _e = err;
+    } finally {
+      try {
+        if (!_n && _i["return"]) _i["return"]();
+      } finally {
+        if (_d) throw _e;
+      }
+    }
 
-window.settings = defaultSettings;
+    return _arr;
+  }
 
+  return function (arr, i) {
+    if (Array.isArray(arr)) {
+      return arr;
+    } else if (Symbol.iterator in Object(arr)) {
+      return sliceIterator(arr, i);
+    } else {
+      throw new TypeError("Invalid attempt to destructure non-iterable instance");
+    }
+  };
+}();
+
+window.settings = params;
+
+var f = require('kambo-functional');
+
+// target[prop] = src[prop]
 function gui_link(src, prop) {
     this.to = function (obj_target) {
         return function (v) {
@@ -35,32 +70,39 @@ function gui_link(src, prop) {
 
 function gui_setup() {
 
-    window.gui = new dat.GUI();
-    window.gui.useLocalStorage = true;
-    window.gui.params = window.settings;
-    console.group('GUI Init...');
+    if (!window.gui) {
+        window.gui = new dat.GUI();
+        window.gui.useLocalStorage = true;
+    }
 
+    console.group('GUI Init...');
     var gui = window.gui;
     gui.remember(window.settings);
     console.info('Remebering GUI Presets... OK');
 
-    var props = ['page_size', 'interval', 'offset', 'restart'];
-    var err_c = false;
+    /* 
+     * Connecting UI to tgt
+     */
+    var src = window.settings;
+    var tgt = window.docScroller.settings;
 
-    try {
-        props.map(function (prop) {
-            var control = gui.add(window.settings, prop);
-            control.onChange(new gui_link(window.settings, prop).to(window.docScroller.settings));
-            return control;
-        });
-        window.docScroller.settings = window.settings;
-    } catch (err) {
-        err_c = true;
-    }
+    var props = { 'enabled': true,
+        'page_size': 10,
+        'interval': 10,
+        'offset': 0,
+        'restart': '' };
 
-    console.info(err_c ? 'Connecting GUI controllers... FAILED' : 'Connecting GUI controllers... OK');
+    var controls = f.toPairs(props).map(function (_ref, idx) {
+        var _ref2 = slicedToArray(_ref, 2),
+            prop_name = _ref2[0],
+            v = _ref2[1];
+
+        var gui_widget = gui.add(src, prop_name);
+        gui_widget.onChange(new gui_link(src, prop_name).to(tgt));
+        return gui_widget;
+    });
+
     console.groupEnd('GUI Init...');
-
     /*
     var c = gui.add(window.settings, 'page_size')
     c.onChange(console.log)
@@ -70,10 +112,8 @@ function gui_setup() {
     */
 }
 
-window.addEventListener('load', gui_setup);
+exports.gui_setup = gui_setup;
 
-var gui = {};
-
-return gui;
+Object.defineProperty(exports, '__esModule', { value: true });
 
 })));

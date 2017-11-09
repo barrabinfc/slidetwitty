@@ -1,7 +1,9 @@
-var defaultSettings = require('./Settings')
+import defaultSettings from './Settings'
 window.settings = defaultSettings
 
+var f = require('kambo-functional');
 
+// target[prop] = src[prop]
 function gui_link( src , prop ) {
     this.to = (obj_target) => {
         return (v) => {
@@ -11,40 +13,37 @@ function gui_link( src , prop ) {
     return this
 }
 
+export function gui_setup(){
+    
+    if(!window.gui){
+        window.gui = new dat.GUI()
+        window.gui.useLocalStorage = true
+    }
 
-function gui_setup(){
-    
-    window.gui = new dat.GUI()
-    window.gui.useLocalStorage = true
-    window.gui.params = window.settings
-    console.group('GUI Init...')
-    
+    console.group('GUI Init...')    
     let gui = window.gui
     gui.remember( window.settings );
     console.info('Remebering GUI Presets... OK')
-    
-    let props = ['page_size','interval','offset', 'restart'];
-    let err_c = false;
 
-    try {
-        props.map( (prop) => {
-            let control = gui.add(window.settings, prop)
-            control.onChange( new gui_link(window.settings,prop)
-                                .to(window.docScroller.settings) )
-            return control
-        })
-        window.docScroller.settings = window.settings;
+    /* 
+     * Connecting UI to tgt
+     */
+    let src = window.settings
+    let tgt = window.docScroller.settings
 
-    } catch (err) {
-        err_c = true
-    }
+    let props = {'enabled': true,
+                 'page_size': 10, 
+                 'interval': 10,
+                 'offset': 0,
+                 'restart': ''};
 
-    console.info( (err_c 
-                    ? 'Connecting GUI controllers... FAILED'
-                    : 'Connecting GUI controllers... OK'))
+    let controls = f.toPairs(props).map( ( [prop_name,v], idx ) => {
+        let gui_widget = gui.add( src, prop_name )
+        gui_widget.onChange( new gui_link(src, prop_name).to( tgt ) )
+        return gui_widget
+    })
+
     console.groupEnd('GUI Init...')
-    
-
     /*
     var c = gui.add(window.settings, 'page_size')
     c.onChange(console.log)
@@ -54,6 +53,3 @@ function gui_setup(){
     */
 
 }
-
-
-window.addEventListener('load', gui_setup )

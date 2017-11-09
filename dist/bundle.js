@@ -109,6 +109,70 @@ var createClass = function () {
   };
 }();
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var slicedToArray = function () {
+  function sliceIterator(arr, i) {
+    var _arr = [];
+    var _n = true;
+    var _d = false;
+    var _e = undefined;
+
+    try {
+      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+        _arr.push(_s.value);
+
+        if (i && _arr.length === i) break;
+      }
+    } catch (err) {
+      _d = true;
+      _e = err;
+    } finally {
+      try {
+        if (!_n && _i["return"]) _i["return"]();
+      } finally {
+        if (_d) throw _e;
+      }
+    }
+
+    return _arr;
+  }
+
+  return function (arr, i) {
+    if (Array.isArray(arr)) {
+      return arr;
+    } else if (Symbol.iterator in Object(arr)) {
+      return sliceIterator(arr, i);
+    } else {
+      throw new TypeError("Invalid attempt to destructure non-iterable instance");
+    }
+  };
+}();
+
 var zenscroll$1 = require('zenscroll');
 window.zenscroll = zenscroll$1;
 
@@ -126,7 +190,14 @@ var Scroller = function () {
     createClass(Scroller, [{
         key: 'cycle',
         value: function cycle() {
+            if (!this.settings.enabled) return;
+
             var next_window = zenscroll$1.getY() + this.settings.page_size;
+
+            if (next_window > this.settings.maxHeight) {
+                next_window = this.onEnd;
+            }
+
             this.scroll(next_window);
         }
     }, {
@@ -168,6 +239,7 @@ var Scroller = function () {
             var _this = this;
 
             this._settings = {
+                enabled: true,
                 page_size: setts.page_size || this.el.clientHeight,
                 maxHeight: this.el.offsetHeight,
                 dur: setts.duration || 785,
@@ -179,9 +251,87 @@ var Scroller = function () {
                 }
             };
         }
+    }, {
+        key: 'onEnd',
+        get: function get$$1() {
+            return this._onend_cb();
+        },
+        set: function set$$1(cb) {
+            this._onend_cb = cb;
+        }
     }]);
     return Scroller;
 }();
+
+var AppSettings = function AppSettings() {
+    this.enabled = true;
+    this.interval = 5;
+    this.user_id = 'zero_likes';
+    this.page_size = 650.0, this.offset = 0, this.restart = function () {
+        destroy();
+        setTimeout(setup, 200);
+    };
+};
+
+var params = new AppSettings();
+
+window.settings = params;
+
+var f$1 = require('kambo-functional');
+
+// target[prop] = src[prop]
+function gui_link(src, prop) {
+    this.to = function (obj_target) {
+        return function (v) {
+            obj_target.set(prop, v);
+        };
+    };
+    return this;
+}
+
+function gui_setup() {
+
+    if (!window.gui) {
+        window.gui = new dat.GUI();
+        window.gui.useLocalStorage = true;
+    }
+
+    console.group('GUI Init...');
+    var gui = window.gui;
+    gui.remember(window.settings);
+    console.info('Remebering GUI Presets... OK');
+
+    /* 
+     * Connecting UI to tgt
+     */
+    var src = window.settings;
+    var tgt = window.docScroller.settings;
+
+    var props = { 'enabled': true,
+        'page_size': 10,
+        'interval': 10,
+        'offset': 0,
+        'restart': '' };
+
+    var controls = f$1.toPairs(props).map(function (_ref, idx) {
+        var _ref2 = slicedToArray(_ref, 2),
+            prop_name = _ref2[0],
+            v = _ref2[1];
+
+        var gui_widget = gui.add(src, prop_name);
+        gui_widget.onChange(new gui_link(src, prop_name).to(tgt));
+        return gui_widget;
+    });
+
+    console.groupEnd('GUI Init...');
+    /*
+    var c = gui.add(window.settings, 'page_size')
+    c.onChange(console.log)
+    gui.add(window.settings, 'interval').min(0).max( 60 ).listen()
+    gui.add(window.settings, 'offset').max(100).listen()
+    gui.add(window.settings, 'restart')
+    */
+}
 
 var f = require('kambo-functional');
 var dom = require('kambo-dom');
@@ -203,15 +353,26 @@ import TwitLine from './TwitLine'
 window.setup = function () {
     console.group('App setup...');
 
+    /* 
+     * Create scroller
+     */
     window.docScroller = new Scroller(document.body);
-    var docScroller = window.docScroller || undefined;
+    window.docScroller.onEnd = function () {
+        console.log("Arrived at end!");
+        return 0; //window.settings.offset
+    };
 
+    var docScroller = window.docScroller || undefined;
     console.log(docScroller != undefined ? 'Creating scroller...OK' : 'Creating scroller...FAILED');
 
-    docScroller.start();
+    /* Start GUI */
+    gui_setup();
+
+    /* Start */
     setTimeout(function () {
+        docScroller.start();
         zenscroll.toY(window.settings.offset);
-    }, 1000);
+    }, 10);
 
     console.groupEnd('App setup...');
 };
@@ -219,6 +380,8 @@ window.setup = function () {
 window.destroy = function () {
     docScroller.stop();
     docScroller = undefined;
+
+    window.gui.destroy();
 };
 
 document.addEventListener('keypress', function (k) {
@@ -226,11 +389,24 @@ document.addEventListener('keypress', function (k) {
         window.gui.domElement.classList.toggle('transparent');
     }
 });
-document.addEventListener('DOMContentLoaded', setup);
+
+function ignite() {
+    twttr.ready(function (twttr) {
+        var _timelineHTML = '<a class="twitter-timeline" \n        data-chrome="noheader nofooter noborders"\n        href="https://twitter.com/zero_likes"></a>';
+        dom.$('#slideshow').innerHTML = _timelineHTML;
+        twttr.widgets.load();
+
+        twttr.events.bind('loaded', function () {
+            console.log('Twitter ready... OK');
+            setup();
+        });
+    });
+}
+document.addEventListener('DOMContentLoaded', ignite);
 
 })));
 
-},{"kambo-dom":2,"kambo-functional":3,"zenscroll":4}],2:[function(require,module,exports){
+},{"kambo-dom":2,"kambo-functional":4,"zenscroll":5}],2:[function(require,module,exports){
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 	typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -470,6 +646,287 @@ Object.defineProperty(exports, '__esModule', { value: true });
 })));
 
 },{}],4:[function(require,module,exports){
+(function (global, factory) {
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+	typeof define === 'function' && define.amd ? define(['exports'], factory) :
+	(factory((global['kambo-functional'] = global['kambo-functional'] || {})));
+}(this, (function (exports) { 'use strict';
+
+/**
+ * Functional Utilities for javascript. Sane functors and type helpers 
+ * @module kambo-functional
+ */
+
+const identity = _ => (_);
+const not = _ => (! _);
+
+const Type   = (v) => (v.constructor);
+
+
+/**
+ * check if `v` is of the type `t`
+ * @param {Any} v
+ * @param {Constructor} t
+ * @return {Boolean}
+ * @example 
+ *   isType( x, Number )
+ *   isType( a, Object )
+ *   isType( c, Animal ) 
+ */
+const isType = ( v , t ) => (v !== null && v.constructor === t || v instanceof t);
+
+/**
+ * converts `obj` into an array of pairs [key, value] 
+ * @param  {Object} obj [description]
+ * @return {Array}      Array of [key,value], ... 
+ */
+function toPairs( obj ) {
+  let asPairs = [];
+  for( var key in obj ) {
+    var pair = [key, obj[key]];
+    asPairs.push( pair ); 
+  }
+  return asPairs
+}
+
+/**
+ * converts Array of pairs to an Object
+ * @param  {Array} array of [key, value] , ...
+ * @return {Object}
+ */
+function fromPairs( arrayPairs ) {
+  let obj = {};
+  for (var i = 0; i < arrayPairs.length; i++) {
+    var [key,value] = arrayPairs[i];
+    obj[key] = value;
+  }
+  return obj
+}
+
+
+
+/**
+ * Converts `p` to a true array, that can be mapped/reduced.
+ * @param  {*} p 
+ * @return {Array}
+ */
+function toArray( p ) {
+  if( isType( p, Number) || 
+      isType( p, Boolean) ) return [p]
+  if( isType( p, NodeList) ) return [].slice.call( p )
+  if( isType( p , Object) ) return toPairs( p )
+  
+  return [...p] 
+}
+
+
+/**
+ * Clone object
+ * @param  {Object} object to be cloned
+ * @return {Object} 
+ */
+const clone = obj => Object.assign({}, obj);
+
+/**
+ * Merge A and B key/values into a new object
+ * @param  {Object} A 
+ * @param  {Object} B 
+ * @return {Object} Merged object
+ */
+const merge = (obj, ...src) => Object.assign({}, obj, ...src);
+
+/**
+ * Does `prop` is in Array `arr` ? 
+ * @param  {Array} arr
+ * @param  {Any} element
+ * @return {Boolean}
+ */
+const includes = (arr, element) => (arr.indexOf(element) !== -1);
+let any   = (element, ...opts) => (includes(opts,element));
+
+
+/*
+ * Apply pattern matching single arity
+ *
+ */
+const arity = (fn , [arity, arityFn]=[0, identity] ) => (...args) => {
+  let arity_args = args.slice(0,arity);
+  return ( args.length == arity ? arityFn(...arity_args)
+                                : fn(...args))
+};
+
+/*
+ * Example of arity usage 
+ 
+any = arity( any,
+          [2, 
+              (element, opts) => {
+                  return (isType(opts, Array) 
+                          ? includes(opts, element)
+                          : includes([opts], element))
+              } ])
+console.log( 'Any arity', any('a', 'a','b','c','d','e') )
+console.log( 'TWo arity', any('d', ['Hello','c','a','d'])) 
+*/
+
+/**
+ * Return 'prop' for every item in `arr` 
+ * @param  {Array} arr  
+ * @param  {String} prop Property address (may be deep, ex: anakin.parent)
+ * @return {Array}
+ */
+const pluck = (arr, prop) => arr.map(c => getit(c, prop));
+
+/** Does key exist in `obj` ? 
+ */
+const hasKey = (obj, key) => key in obj;
+
+/**
+ * Get `key` from `obj`
+ * @param  {Object} obj 
+ * @param  {String} key Address to retrieve, that can be deep (ex: children.someprop.otherProp)
+ * @return {Any|undefined}        Property value or undefined if not found.
+ */
+const getit = (obj, key) => key.split('.').reduce((nestedObject, key) => {
+  if (nestedObject && key in nestedObject) {
+    return nestedObject[key]
+  }
+  return undefined
+}, obj);
+
+/**
+ * return `val` or `fallback`, if `val` is true 
+ * @param  {[type]} val      [description]
+ * @param  {[type]} fallback [description]
+ * @return {[type]}          [description]
+ */
+const either = (val, fallback) => ((val === undefined || !val) ? fallback : val);
+
+
+/**
+ *  pipe two or more functions
+ * @param  {Function} functions 
+ * @return {Function}           
+ */
+// let randomRange = (start,end) => Math.round( start + Math.random()*(end-start)) )
+const pipe = functions => data => functions.reduce(
+    (value, func) => func(value),
+    data
+);
+
+/* Zip two arrays in a object
+ * zip( ['a','b'],[10,20] ) => {a: 10, b: 20} 
+ */
+const zip = (a,b) => {
+  let ß = {};
+  a.map( (prop,i) => {
+    ß[prop] = b[i];
+  });
+  return ß
+};
+  
+/**
+ * Caches results of `fn`
+ */
+const memoize = (fn) => {
+  let cache = {};
+  return (...args) => {
+    let n = args[0];
+    if (n in cache) 
+      return cache[n];
+    else {
+      let result = fn(n);
+      cache[n] = result;
+      return result;
+    }
+  }
+};
+
+
+/*
+  * Retry N times decorator
+  * 
+  * new Retry( 3, openFile ).waitFor(1000).do('config.json')
+  *         .then( (config) => proceed )
+  *         .catch( abort )
+  * 
+  * function proceed(){}
+  * function abort(){}
+  */
+function Retry( n , lambda ) {
+
+  this._waitInterval = 800;
+  this._n = n-1;
+
+  this.waitFor = ( interval ) => {
+    this._waitInterval = interval;
+    return this
+  };
+
+  /* Special retry promise.
+    * Try to call lambda at least N times, waiting 1s between each try
+    *
+    * if success, resolve
+    * if fail,  reject
+    */
+  this.retry_promise = (...args) => (resolve, reject) => {
+    
+    /* Resolve if no exception */
+    var r = this.plz_try(...args);
+    
+    if( r !== null && !( r instanceof Error )) { resolve(r);
+    } else {
+      /* Retry N times */
+      if(this._n == 0) {
+        reject(r);
+      }
+      else {
+        this._n = this._n - 1;
+        window.setTimeout( this.retry_promise(...args), this._waitInterval,
+                           ...[resolve,reject] );
+      }
+    }
+  };
+
+  this.do = (...args) => {
+    return new Promise( this.retry_promise(...args) )
+  };
+
+  this.plz_try = ( ...args ) => {
+    try {
+      return lambda(...args)
+    } catch (err) {
+      return err
+    }
+  };
+}
+
+exports.identity = identity;
+exports.not = not;
+exports.Type = Type;
+exports.isType = isType;
+exports.toPairs = toPairs;
+exports.fromPairs = fromPairs;
+exports.toArray = toArray;
+exports.clone = clone;
+exports.merge = merge;
+exports.includes = includes;
+exports.any = any;
+exports.arity = arity;
+exports.pluck = pluck;
+exports.hasKey = hasKey;
+exports.getit = getit;
+exports.either = either;
+exports.pipe = pipe;
+exports.zip = zip;
+exports.memoize = memoize;
+exports.Retry = Retry;
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+})));
+
+},{}],5:[function(require,module,exports){
 /**
  * Zenscroll 4.0.0
  * https://github.com/zengabor/zenscroll/

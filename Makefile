@@ -6,7 +6,7 @@ js:
 
 bundle_js:
 	browserify dist/app.js -s app > dist/bundle.js
-	browserify dist/gui.js -s mgui > dist/mgui.js 
+	#browserify dist/gui.js -s mgui > dist/mgui.js 
 
 watch:
 	watchmedo shell-command \

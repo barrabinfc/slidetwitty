@@ -15,6 +15,7 @@ export default class Scroller {
     }
     set settings( setts ) {
         this._settings = {
+            enabled:    true,            
             page_size:  setts.page_size || this.el.clientHeight,
             maxHeight:  this.el.offsetHeight,
             dur:        setts.duration || 785,
@@ -29,7 +30,14 @@ export default class Scroller {
     
 
     cycle(){
+        if(!this.settings.enabled) return
+        
         let next_window = zenscroll.getY() + this.settings.page_size;
+        
+        if(next_window > this.settings.maxHeight){
+            next_window = this.onEnd
+        }
+        
         this.scroll( next_window )
     }
 
@@ -53,5 +61,6 @@ export default class Scroller {
         else { this.start(); }
     }
 
-
+    get onEnd() {        return this._onend_cb() }
+    set onEnd( cb ) {    this._onend_cb = cb;    }
 }

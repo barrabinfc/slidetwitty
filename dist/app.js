@@ -108,6 +108,70 @@ var createClass = function () {
   };
 }();
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var slicedToArray = function () {
+  function sliceIterator(arr, i) {
+    var _arr = [];
+    var _n = true;
+    var _d = false;
+    var _e = undefined;
+
+    try {
+      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+        _arr.push(_s.value);
+
+        if (i && _arr.length === i) break;
+      }
+    } catch (err) {
+      _d = true;
+      _e = err;
+    } finally {
+      try {
+        if (!_n && _i["return"]) _i["return"]();
+      } finally {
+        if (_d) throw _e;
+      }
+    }
+
+    return _arr;
+  }
+
+  return function (arr, i) {
+    if (Array.isArray(arr)) {
+      return arr;
+    } else if (Symbol.iterator in Object(arr)) {
+      return sliceIterator(arr, i);
+    } else {
+      throw new TypeError("Invalid attempt to destructure non-iterable instance");
+    }
+  };
+}();
+
 var zenscroll$1 = require('zenscroll');
 window.zenscroll = zenscroll$1;
 
@@ -125,7 +189,14 @@ var Scroller = function () {
     createClass(Scroller, [{
         key: 'cycle',
         value: function cycle() {
+            if (!this.settings.enabled) return;
+
             var next_window = zenscroll$1.getY() + this.settings.page_size;
+
+            if (next_window > this.settings.maxHeight) {
+                next_window = this.onEnd;
+            }
+
             this.scroll(next_window);
         }
     }, {
@@ -167,6 +238,7 @@ var Scroller = function () {
             var _this = this;
 
             this._settings = {
+                enabled: true,
                 page_size: setts.page_size || this.el.clientHeight,
                 maxHeight: this.el.offsetHeight,
                 dur: setts.duration || 785,
@@ -178,9 +250,87 @@ var Scroller = function () {
                 }
             };
         }
+    }, {
+        key: 'onEnd',
+        get: function get$$1() {
+            return this._onend_cb();
+        },
+        set: function set$$1(cb) {
+            this._onend_cb = cb;
+        }
     }]);
     return Scroller;
 }();
+
+var AppSettings = function AppSettings() {
+    this.enabled = true;
+    this.interval = 5;
+    this.user_id = 'zero_likes';
+    this.page_size = 650.0, this.offset = 0, this.restart = function () {
+        destroy();
+        setTimeout(setup, 200);
+    };
+};
+
+var params = new AppSettings();
+
+window.settings = params;
+
+var f$1 = require('kambo-functional');
+
+// target[prop] = src[prop]
+function gui_link(src, prop) {
+    this.to = function (obj_target) {
+        return function (v) {
+            obj_target.set(prop, v);
+        };
+    };
+    return this;
+}
+
+function gui_setup() {
+
+    if (!window.gui) {
+        window.gui = new dat.GUI();
+        window.gui.useLocalStorage = true;
+    }
+
+    console.group('GUI Init...');
+    var gui = window.gui;
+    gui.remember(window.settings);
+    console.info('Remebering GUI Presets... OK');
+
+    /* 
+     * Connecting UI to tgt
+     */
+    var src = window.settings;
+    var tgt = window.docScroller.settings;
+
+    var props = { 'enabled': true,
+        'page_size': 10,
+        'interval': 10,
+        'offset': 0,
+        'restart': '' };
+
+    var controls = f$1.toPairs(props).map(function (_ref, idx) {
+        var _ref2 = slicedToArray(_ref, 2),
+            prop_name = _ref2[0],
+            v = _ref2[1];
+
+        var gui_widget = gui.add(src, prop_name);
+        gui_widget.onChange(new gui_link(src, prop_name).to(tgt));
+        return gui_widget;
+    });
+
+    console.groupEnd('GUI Init...');
+    /*
+    var c = gui.add(window.settings, 'page_size')
+    c.onChange(console.log)
+    gui.add(window.settings, 'interval').min(0).max( 60 ).listen()
+    gui.add(window.settings, 'offset').max(100).listen()
+    gui.add(window.settings, 'restart')
+    */
+}
 
 var f = require('kambo-functional');
 var dom = require('kambo-dom');
@@ -202,15 +352,26 @@ import TwitLine from './TwitLine'
 window.setup = function () {
     console.group('App setup...');
 
+    /* 
+     * Create scroller
+     */
     window.docScroller = new Scroller(document.body);
-    var docScroller = window.docScroller || undefined;
+    window.docScroller.onEnd = function () {
+        console.log("Arrived at end!");
+        return 0; //window.settings.offset
+    };
 
+    var docScroller = window.docScroller || undefined;
     console.log(docScroller != undefined ? 'Creating scroller...OK' : 'Creating scroller...FAILED');
 
-    docScroller.start();
+    /* Start GUI */
+    gui_setup();
+
+    /* Start */
     setTimeout(function () {
+        docScroller.start();
         zenscroll.toY(window.settings.offset);
-    }, 1000);
+    }, 10);
 
     console.groupEnd('App setup...');
 };
@@ -218,6 +379,8 @@ window.setup = function () {
 window.destroy = function () {
     docScroller.stop();
     docScroller = undefined;
+
+    window.gui.destroy();
 };
 
 document.addEventListener('keypress', function (k) {
@@ -225,6 +388,19 @@ document.addEventListener('keypress', function (k) {
         window.gui.domElement.classList.toggle('transparent');
     }
 });
-document.addEventListener('DOMContentLoaded', setup);
+
+function ignite() {
+    twttr.ready(function (twttr) {
+        var _timelineHTML = '<a class="twitter-timeline" \n        data-chrome="noheader nofooter noborders"\n        href="https://twitter.com/zero_likes"></a>';
+        dom.$('#slideshow').innerHTML = _timelineHTML;
+        twttr.widgets.load();
+
+        twttr.events.bind('loaded', function () {
+            console.log('Twitter ready... OK');
+            setup();
+        });
+    });
+}
+document.addEventListener('DOMContentLoaded', ignite);
 
 })));

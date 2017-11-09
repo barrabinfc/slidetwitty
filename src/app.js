@@ -18,30 +18,44 @@ import TwitLine from './TwitLine'
 */
 import Scroller from './Scroller'
 import defaultSettings from './Settings'
-
+import { gui_setup } from './gui'
 
 // Alias and declarations
 window.setup = function() {
     console.group('App setup...')
 
-    window.docScroller = new Scroller(document.body );
-    let docScroller = window.docScroller || undefined;
+    /* 
+     * Create scroller
+     */
+    window.docScroller = new Scroller(document.body);
+    window.docScroller.onEnd = () => {
+        console.log("Arrived at end!")
+        return 0; //window.settings.offset
+    }
 
+    let docScroller = window.docScroller || undefined;
     console.log( docScroller != undefined 
                  ? 'Creating scroller...OK' 
                  : 'Creating scroller...FAILED')
 
-    docScroller.start();
-    setTimeout(function () {
-        zenscroll.toY(window.settings.offset);
-    }, 1000);
+    /* Start GUI */
+    gui_setup()
+    
 
-    console.groupEnd('App setup...')
+    /* Start */
+    setTimeout(function () {
+        docScroller.start();        
+        zenscroll.toY(window.settings.offset);
+    }, 10);
+
+    console.groupEnd('App setup...')    
 }
 
 window.destroy = function(){
     docScroller.stop()
     docScroller = undefined;
+
+    window.gui.destroy()
 }
 
 document.addEventListener('keypress', function (k) {
@@ -49,4 +63,23 @@ document.addEventListener('keypress', function (k) {
         window.gui.domElement.classList.toggle('transparent');
     }
 });
-document.addEventListener('DOMContentLoaded', setup);
+
+function ignite( ){
+        twttr.ready( (twttr) => {
+        var msg = 'Twitter ready...'
+
+        // Add twitter element
+        let _timelineHTML = `<a class="twitter-timeline" 
+        data-chrome="noheader nofooter noborders"
+        href="https://twitter.com/zero_likes"></a>`
+        dom.$('#slideshow').innerHTML = _timelineHTML
+        twttr.widgets.load()
+
+        twttr.events.bind('loaded', () => {
+            console.log('Twitter ready... OK')
+            setup()            
+        })
+    })        
+}
+document.addEventListener('DOMContentLoaded', ignite);
+
