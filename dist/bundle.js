@@ -349,6 +349,8 @@ applyPolyfills(DEFAULT_POLYFILLS, 'node_modules/kambo-polyfills/polyfills/').the
  
 import TwitLine from './TwitLine'
 */
+window.settings = params;
+
 // Alias and declarations
 window.setup = function () {
     console.group('App setup...');
@@ -356,25 +358,27 @@ window.setup = function () {
     /* 
      * Create scroller
      */
-    window.docScroller = new Scroller(document.body);
-    window.docScroller.onEnd = function () {
+    this.docScroller = new Scroller(document.body);
+    this.docScroller.onEnd = function () {
         console.log("Arrived at end!");
         return 0; //window.settings.offset
     };
 
-    var docScroller = window.docScroller || undefined;
-    console.log(docScroller != undefined ? 'Creating scroller...OK' : 'Creating scroller...FAILED');
+    console.log(this.docScroller != undefined ? 'Creating scroller...OK' : 'Creating scroller...FAILED');
 
-    /* Start GUI */
+    /* Setup GUI */
     gui_setup();
 
-    /* Start */
-    setTimeout(function () {
-        docScroller.start();
-        zenscroll.toY(window.settings.offset);
-    }, 10);
-
     console.groupEnd('App setup...');
+    start();
+    console.log("App Start...OK");
+};
+
+window.start = function () {
+    /* Start */
+    docScroller.settings = window.settings;
+    docScroller.start();
+    zenscroll.toY(window.settings.offset);
 };
 
 window.destroy = function () {
@@ -385,9 +389,11 @@ window.destroy = function () {
 };
 
 document.addEventListener('keypress', function (k) {
+    /*
     if (k.key == "Enter") {
         window.gui.domElement.classList.toggle('transparent');
     }
+    */
 });
 
 function ignite() {
@@ -398,7 +404,7 @@ function ignite() {
 
         twttr.events.bind('loaded', function () {
             console.log('Twitter ready... OK');
-            setup();
+            setup.call(window);
         });
     });
 }
