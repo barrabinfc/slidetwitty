@@ -21,6 +21,7 @@ import Scroller from './Scroller'
 import defaultSettings from './Settings'
 import { gui_setup } from './gui'
 
+/** @global  */
 window.settings = defaultSettings
 
 // Alias and declarations

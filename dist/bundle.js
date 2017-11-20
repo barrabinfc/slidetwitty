@@ -349,6 +349,7 @@ applyPolyfills(DEFAULT_POLYFILLS, 'node_modules/kambo-polyfills/polyfills/').the
  
 import TwitLine from './TwitLine'
 */
+/** @global  */
 window.settings = params;
 
 // Alias and declarations
