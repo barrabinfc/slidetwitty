@@ -64,7 +64,7 @@ window.destroy = function(){
     window.gui.destroy()
 }
 
-document.addEventListener('keypress', function (k) {
+window.addEventListener('keypress', function (k) {
         window.gui.domElement.classList.toggle('transparent');
 });
 

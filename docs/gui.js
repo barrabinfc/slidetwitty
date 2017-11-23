@@ -103,7 +103,9 @@ function gui_setup() {
     });
 
     // Make it hidden
-    window.gui.domElement.classList.toggle('transparent');
+    setTimeout(function () {
+        window.gui.domElement.classList.toggle('transparent');
+    }, 1000);
 
     console.groupEnd('GUI Init...');
     /*

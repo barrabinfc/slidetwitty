@@ -323,6 +323,11 @@ function gui_setup() {
         return gui_widget;
     });
 
+    // Make it hidden
+    setTimeout(function () {
+        window.gui.domElement.classList.toggle('transparent');
+    }, 1000);
+
     console.groupEnd('GUI Init...');
     /*
     var c = gui.add(window.settings, 'page_size')
@@ -389,12 +394,8 @@ window.destroy = function () {
     window.gui.destroy();
 };
 
-document.addEventListener('keypress', function (k) {
-    /*
-    if (k.key == "Enter") {
-        window.gui.domElement.classList.toggle('transparent');
-    }
-    */
+window.addEventListener('keypress', function (k) {
+    window.gui.domElement.classList.toggle('transparent');
 });
 
 function ignite() {
