@@ -322,6 +322,9 @@ function gui_setup() {
         return gui_widget;
     });
 
+    // Make it hidden
+    window.gui.domElement.classList.toggle('transparent');
+
     console.groupEnd('GUI Init...');
     /*
     var c = gui.add(window.settings, 'page_size')
@@ -389,11 +392,7 @@ window.destroy = function () {
 };
 
 document.addEventListener('keypress', function (k) {
-    /*
-    if (k.key == "Enter") {
-        window.gui.domElement.classList.toggle('transparent');
-    }
-    */
+    window.gui.domElement.classList.toggle('transparent');
 });
 
 function ignite() {

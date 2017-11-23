@@ -65,11 +65,7 @@ window.destroy = function(){
 }
 
 document.addEventListener('keypress', function (k) {
-    /*
-    if (k.key == "Enter") {
         window.gui.domElement.classList.toggle('transparent');
-    }
-    */
 });
 
 function ignite( ){
